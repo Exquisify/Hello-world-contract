@@ -1,0 +1,10 @@
+/Users/c02x6441jgh5/Desktop/projects/Hello-world-contract/target/debug/deps/soroban_spec_rust-f7566ff86458518d.d: /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/lib.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/syn_ext.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/trait.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/types.rs
+
+/Users/c02x6441jgh5/Desktop/projects/Hello-world-contract/target/debug/deps/libsoroban_spec_rust-f7566ff86458518d.rlib: /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/lib.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/syn_ext.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/trait.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/types.rs
+
+/Users/c02x6441jgh5/Desktop/projects/Hello-world-contract/target/debug/deps/libsoroban_spec_rust-f7566ff86458518d.rmeta: /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/lib.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/syn_ext.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/trait.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/types.rs
+
+/Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/lib.rs:
+/Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/syn_ext.rs:
+/Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/trait.rs:
+/Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/soroban-spec-rust-26.1.0/src/types.rs:

@@ -1,0 +1,9 @@
+/Users/c02x6441jgh5/Desktop/projects/Hello-world-contract/target/debug/deps/ark_serialize-05f093a22d92a622.d: /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/lib.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/error.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/flags.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/impls.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/../README.md
+
+/Users/c02x6441jgh5/Desktop/projects/Hello-world-contract/target/debug/deps/libark_serialize-05f093a22d92a622.rmeta: /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/lib.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/error.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/flags.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/impls.rs /Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/../README.md
+
+/Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/lib.rs:
+/Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/error.rs:
+/Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/flags.rs:
+/Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/impls.rs:
+/Users/c02x6441jgh5/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ark-serialize-0.5.0/src/../README.md:
