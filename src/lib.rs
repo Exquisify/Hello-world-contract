@@ -1,7 +1,29 @@
+//! # Prediction Oracle Verifier
+//!
+//! A Soroban smart contract that resolves on-chain predictions against
+//! off-chain price data supplied by whitelisted oracle addresses.
+//!
+//! ## Roles
+//! - **Admin** – set at `init`, can whitelist/revoke oracle addresses.
+//! - **Oracle** – whitelisted address that calls `resolve_prediction` with
+//!   real-world price data after a prediction's deadline has passed.
+//! - **Anyone** – can read resolutions via `get_resolution`.
+//!
+//! ## Resolution logic
+//! `actual_price >= target_price` → `ResolutionResult::Correct`
+//! `actual_price <  target_price` → `ResolutionResult::Incorrect`
+
 #![no_std]
 
 #[cfg(test)]
 extern crate std;
+
+pub mod errors;
+pub mod storage;
+pub mod types;
+
+#[cfg(test)]
+mod tests;
 
 use soroban_sdk::{
     contract, contractclient, contracterror, contractimpl, contracttype, panic_with_error,
@@ -74,7 +96,7 @@ pub enum IdeaError {
 }
 
 #[contract]
-pub struct IdeaContract;
+pub struct PredictionVerifier;
 
 #[contractimpl]
 impl IdeaContract {
@@ -116,15 +138,42 @@ impl IdeaContract {
         env.events()
             .publish((symbol_short!("Created"), author), idea_id);
 
-        idea_id
+    // ─── Oracle whitelist management (admin-only) ─────────────────────────────
+
+    /// Whitelist an oracle address. Only the admin may call this.
+    ///
+    /// # Arguments
+    /// * `caller`         – must be the admin
+    /// * `oracle_address` – address to whitelist
+    pub fn set_authorized_oracle(env: Env, caller: Address, oracle_address: Address) {
+        require_admin(&env, &caller);
+        add_oracle(&env, &oracle_address);
+
+        env.events().publish(
+            (symbol_short!("OracleAdd"), caller),
+            oracle_address,
+        );
     }
 
-    pub fn read_idea(env: Env, idea_id: i128) -> IdeaData {
-        get_idea(&env, idea_id)
+    /// Revoke an oracle from the whitelist. Only the admin may call this.
+    ///
+    /// # Arguments
+    /// * `caller`         – must be the admin
+    /// * `oracle_address` – address to revoke
+    pub fn remove_authorized_oracle(env: Env, caller: Address, oracle_address: Address) {
+        require_admin(&env, &caller);
+        remove_oracle(&env, &oracle_address);
+
+        env.events().publish(
+            (symbol_short!("OracleRem"), caller),
+            oracle_address,
+        );
     }
 
-    pub fn update_idea(env: Env, idea_id: i128, caller: Address, new_body: String) {
-        caller.require_auth();
+    /// Return the current list of whitelisted oracle addresses.
+    pub fn get_authorized_oracles(env: Env) -> Vec<Address> {
+        get_authorized_oracles(&env)
+    }
 
         let mut idea = get_idea(&env, idea_id);
         ensure_active_and_author(&env, &idea, &caller);
@@ -136,12 +185,14 @@ impl IdeaContract {
             .persistent()
             .set(&DataKey::Idea(idea_id), &idea);
 
-        env.events()
-            .publish((symbol_short!("Updated"), caller), idea_id);
-    }
+        // 4. Determine outcome
+        let result = if actual_price >= target_price {
+            ResolutionResult::Correct
+        } else {
+            ResolutionResult::Incorrect
+        };
 
-    pub fn delete_idea(env: Env, idea_id: i128, caller: Address) {
-        caller.require_auth();
+        let correct = matches!(result, ResolutionResult::Correct);
 
         let mut idea = get_idea(&env, idea_id);
         ensure_active_and_author(&env, &idea, &caller);
@@ -153,8 +204,11 @@ impl IdeaContract {
             .persistent()
             .set(&DataKey::Idea(idea_id), &idea);
 
-        env.events()
-            .publish((symbol_short!("Deleted"), caller), idea_id);
+        // 5. Emit PredictionResolved event
+        env.events().publish(
+            (symbol_short!("PRSolved"), prediction_id),
+            (correct, actual_price, oracle),
+        );
     }
 
     pub fn vote(env: Env, idea_id: i128, voter: Address, direction: VoteDirection) {
@@ -254,11 +308,9 @@ impl IdeaContract {
             .unwrap_or_else(|| Vec::new(&env))
     }
 
-    pub fn list_ideas_by_category(env: Env, category: String) -> Vec<i128> {
-        env.storage()
-            .persistent()
-            .get(&DataKey::CategoryIdeas(category))
-            .unwrap_or_else(|| Vec::new(&env))
+    /// Convenience: return `true` if a prediction has been resolved.
+    pub fn is_resolved(env: Env, prediction_id: i128) -> bool {
+        storage_get_resolution(&env, prediction_id).is_some()
     }
 }
 
