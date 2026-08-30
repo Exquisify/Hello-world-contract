@@ -1,48 +1,35 @@
-use soroban_sdk::{contracttype, Address};
+//! Type definitions for the Token Vault contract.
 
-/// The outcome of a resolved prediction.
+use soroban_sdk::{Address, contracttype};
+
+/// Vault configuration.
 #[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ResolutionResult {
-    /// actual_price >= target_price
-    Correct,
-    /// actual_price < target_price
-    Incorrect,
+#[derive(Clone, Debug)]
+pub struct VaultConfig {
+    /// Whether the vault is paused
+    pub paused: bool,
+    /// Admin address
+    pub owner: Address,
+    /// Token contract address
+    pub token: Address,
 }
 
-/// Stored on-chain after a prediction is resolved by an oracle.
+/// User balance.
 #[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Resolution {
-    pub prediction_id: i128,
-    pub result: ResolutionResult,
-    pub actual_price: u128,
-    pub oracle: Address,
-    pub resolution_timestamp: u64,
+#[derive(Clone, Debug)]
+pub struct Balance {
+    /// Amount of tokens
+    pub amount: i128,
+    /// Last update timestamp
+    pub last_updated: u64,
 }
 
-/// A prediction that can be targeted for resolution.
-///
-/// Fields must mirror whatever the outer PredictionContract stores.
-/// We keep only what the verifier needs so this module stays decoupled.
+/// Allowance from owner to spender.
 #[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PredictionData {
-    pub id: i128,
-    pub author: Address,
-    pub target_price: u128,
-    pub deadline: u64,
-    pub resolved: bool,
-}
-
-/// Storage key namespace for the verifier module.
-#[contracttype]
-#[derive(Clone)]
-pub enum VerifierKey {
-    /// Set<Address> — whitelisted oracle addresses (admin-controlled)
-    AuthorizedOracles,
-    /// Resolution record keyed by prediction id
-    Resolution(i128),
-    /// The contract admin (set at deploy time / via init)
-    Admin,
+#[derive(Clone, Debug)]
+pub struct Allowance {
+    /// Amount allowed to spend
+    pub amount: i128,
+    /// Spender address
+    pub spender: Address,
 }

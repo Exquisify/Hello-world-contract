@@ -87,7 +87,6 @@ impl FaucetContract {
             .persistent()
             .set(&DataKey::LastClaim(user), &current_time);
     }
-}
 
 #[cfg(test)]
 mod test {

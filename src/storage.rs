@@ -1,111 +1,185 @@
-use soroban_sdk::{Address, Env, Vec};
+//! Storage module for the Token Vault contract.
+//! Handles all storage operations with proper key management.
 
-use crate::errors::VerifierError;
-use crate::types::{PredictionData, Resolution, VerifierKey};
+use soroban_sdk::{contracttype, Address, Env};
+use crate::types::{Allowance, Balance, VaultConfig};
+use crate::errors::Error;
 
-// ─── Admin ────────────────────────────────────────────────────────────────────
-
-pub fn get_admin(env: &Env) -> Option<Address> {
-    env.storage().instance().get(&VerifierKey::Admin)
+/// Storage keys for the vault contract.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum DataKey {
+    /// Vault initialized flag
+    Initialized,
+    /// Admin address
+    Admin,
+    /// Token address
+    Token,
+    /// Vault configuration
+    Config,
+    /// User balance
+    Balance(Address),
+    /// Allowance from owner to spender
+    Allowance(Address, Address),
+    /// Vault paused flag
+    Paused,
+    /// Total deposits
+    TotalDeposits,
 }
 
-pub fn set_admin(env: &Env, admin: &Address) {
-    env.storage().instance().set(&VerifierKey::Admin, admin);
-}
+/// Storage helper functions.
+pub struct Storage;
 
-pub fn require_admin(env: &Env, caller: &Address) {
-    let admin: Address = env
-        .storage()
-        .instance()
-        .get(&VerifierKey::Admin)
-        .unwrap_or_else(|| panic_with_verifier_error(env, VerifierError::NotInitialised));
-    if admin != *caller {
-        panic_with_verifier_error(env, VerifierError::Unauthorized);
+impl Storage {
+    // ─── Initialization ──────────────────────────────────────────────────────
+
+    /// Check if the vault is initialized.
+    pub fn is_initialized(env: &Env) -> bool {
+        env.storage().instance().has(&DataKey::Initialized)
     }
-    caller.require_auth();
-}
 
-// ─── Authorized oracles ───────────────────────────────────────────────────────
+    /// Set the vault as initialized.
+    pub fn set_initialized(env: &Env) {
+        env.storage().instance().set(&DataKey::Initialized, &true);
+    }
 
-pub fn get_authorized_oracles(env: &Env) -> Vec<Address> {
-    env.storage()
-        .persistent()
-        .get(&VerifierKey::AuthorizedOracles)
-        .unwrap_or_else(|| Vec::new(env))
-}
+    // ─── Admin ───────────────────────────────────────────────────────────────
 
-pub fn is_oracle_authorized(env: &Env, oracle: &Address) -> bool {
-    get_authorized_oracles(env).contains(oracle)
-}
+    /// Get the admin address.
+    pub fn get_admin(env: &Env) -> Result<Address, Error> {
+        env.storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)
+    }
 
-pub fn add_oracle(env: &Env, oracle: &Address) {
-    let mut oracles = get_authorized_oracles(env);
-    if !oracles.contains(oracle) {
-        oracles.push_back(oracle.clone());
+    /// Set the admin address.
+    pub fn set_admin(env: &Env, admin: &Address) {
+        env.storage().instance().set(&DataKey::Admin, admin);
+    }
+
+    // ─── Token ──────────────────────────────────────────────────────────────
+
+    /// Get the token address.
+    pub fn get_token(env: &Env) -> Result<Address, Error> {
+        env.storage()
+            .instance()
+            .get(&DataKey::Token)
+            .ok_or(Error::NotInitialized)
+    }
+
+    /// Set the token address.
+    pub fn set_token(env: &Env, token: &Address) {
+        env.storage().instance().set(&DataKey::Token, token);
+    }
+
+    // ─── Config ─────────────────────────────────────────────────────────────
+
+    /// Get the vault configuration.
+    pub fn get_config(env: &Env) -> Result<VaultConfig, Error> {
+        env.storage()
+            .instance()
+            .get(&DataKey::Config)
+            .ok_or(Error::NotInitialized)
+    }
+
+    /// Set the vault configuration.
+    pub fn set_config(env: &Env, config: &VaultConfig) {
+        env.storage().instance().set(&DataKey::Config, config);
+    }
+
+    // ─── Pause ──────────────────────────────────────────────────────────────
+
+    /// Check if the vault is paused.
+    pub fn is_paused(env: &Env) -> bool {
+        env.storage().instance().get(&DataKey::Paused).unwrap_or(false)
+    }
+
+    /// Pause the vault.
+    pub fn pause_vault(env: &Env) {
+        env.storage().instance().set(&DataKey::Paused, &true);
+    }
+
+    /// Unpause the vault.
+    pub fn unpause_vault(env: &Env) {
+        env.storage().instance().set(&DataKey::Paused, &false);
+    }
+
+    // ─── Balance ────────────────────────────────────────────────────────────
+
+    /// Get a user's balance.
+    pub fn get_balance(env: &Env, user: &Address) -> Balance {
         env.storage()
             .persistent()
-            .set(&VerifierKey::AuthorizedOracles, &oracles);
+            .get(&DataKey::Balance(user.clone()))
+            .unwrap_or(Balance {
+                amount: 0,
+                last_updated: env.ledger().timestamp(),
+            })
     }
-}
 
-pub fn remove_oracle(env: &Env, oracle: &Address) {
-    let oracles = get_authorized_oracles(env);
-    let mut updated: Vec<Address> = Vec::new(env);
-    for o in oracles.iter() {
-        if o != *oracle {
-            updated.push_back(o);
-        }
+    /// Set a user's balance.
+    pub fn set_balance(env: &Env, user: &Address, balance: &Balance) {
+        env.storage()
+            .persistent()
+            .set(&DataKey::Balance(user.clone()), balance);
     }
-    env.storage()
-        .persistent()
-        .set(&VerifierKey::AuthorizedOracles, &updated);
-}
 
-// ─── Resolutions ─────────────────────────────────────────────────────────────
+    // ─── Allowance ──────────────────────────────────────────────────────────
 
-pub fn get_resolution(env: &Env, prediction_id: i128) -> Option<Resolution> {
-    env.storage()
-        .persistent()
-        .get(&VerifierKey::Resolution(prediction_id))
-}
+    /// Get the allowance from owner to spender.
+    pub fn get_allowance(env: &Env, owner: &Address, spender: &Address) -> Allowance {
+        env.storage()
+            .persistent()
+            .get(&DataKey::Allowance(owner.clone(), spender.clone()))
+            .unwrap_or(Allowance {
+                amount: 0,
+                spender: spender.clone(),
+            })
+    }
 
-pub fn save_resolution(env: &Env, resolution: &Resolution) {
-    env.storage()
-        .persistent()
-        .set(&VerifierKey::Resolution(resolution.prediction_id), resolution);
-}
+    /// Set the allowance from owner to spender.
+    pub fn set_allowance(env: &Env, owner: &Address, spender: &Address, allowance: &Allowance) {
+        env.storage()
+            .persistent()
+            .set(&DataKey::Allowance(owner.clone(), spender.clone()), allowance);
+    }
 
-// ─── Prediction cross-call stub ───────────────────────────────────────────────
-//
-// For now we expose a helper that reads the data from shared
-// persistent storage when both contracts are deployed together, or panics with
-// a clear error during standalone verifier testing.
-//
-// Swap this function body for a real cross-contract client once the
-// PredictionContract interface is stable.
+    // ─── Total Deposits ─────────────────────────────────────────────────────
 
-pub fn get_prediction(env: &Env, prediction_id: i128) -> PredictionData {
-    use crate::types::VerifierKey;
-    // Key mirrors what PredictionContract writes under DataKey::Prediction(id).
-    // Both contracts share persistent storage in Soroban when same Wasm/footprint
-    // is used; replace with a client call if deployed separately.
-    env.storage()
-        .persistent()
-        .get(&VerifierKey::Resolution(prediction_id)) // placeholder — see note above
-        .map(|_r: Resolution| {
-            // If a resolution already exists the caller will catch AlreadyResolved
-            // before we reach here in normal flow.
-            panic_with_verifier_error(env, VerifierError::AlreadyResolved)
-        })
-        .unwrap_or_else(|| {
-            // Real implementation: call PredictionContract.get_prediction(prediction_id)
-            panic_with_verifier_error(env, VerifierError::PredictionNotFound)
-        })
-}
+    /// Get total deposits.
+    pub fn get_total_deposits(env: &Env) -> i128 {
+        env.storage()
+            .persistent()
+            .get(&DataKey::TotalDeposits)
+            .unwrap_or(0)
+    }
 
-// ─── Internal panic helper ───────────────────────────────────────────────────
+    /// Add to total deposits.
+    pub fn add_to_total_deposits(env: &Env, amount: i128) {
+        let current = Self::get_total_deposits(env);
+        env.storage()
+            .persistent()
+            .set(&DataKey::TotalDeposits, &(current + amount));
+    }
 
-#[inline(always)]
-pub fn panic_with_verifier_error(env: &Env, err: VerifierError) -> ! {
-    soroban_sdk::panic_with_error!(env, err)
+    // ─── Events ─────────────────────────────────────────────────────────────
+
+    /// Emit a deposit event.
+    pub fn emit_deposit_event(env: &Env, user: &Address, amount: i128) {
+        env.events()
+            .publish(("deposit", user), amount);
+    }
+
+    /// Emit a withdraw event.
+    pub fn emit_withdraw_event(env: &Env, user: &Address, amount: i128) {
+        env.events()
+            .publish(("withdraw", user), amount);
+    }
+
+    /// Emit an approval event.
+    pub fn emit_approval_event(env: &Env, owner: &Address, spender: &Address, amount: i128) {
+        env.events()
+            .publish(("approval", owner, spender), amount);
+    }
 }
